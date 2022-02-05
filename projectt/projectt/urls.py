@@ -15,7 +15,12 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from crowdFunding.views import register, login, home, edit
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('reg', register),
+    path('login',login),
+    path('home', home, name='home'),
+    path('edit',edit, name='user_edit')
 ]
