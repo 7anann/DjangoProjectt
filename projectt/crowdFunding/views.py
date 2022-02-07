@@ -7,25 +7,39 @@ from django.template import context
 from .models import myuser
 from .forms import RegisterationForm, loginForm, EditForm
 from django.views import View
-from django.views.generic import ListView
-from django.views.decorators.http import require_http_methods, require_POST, require_GET
-from django.contrib.auth.models import User
-from django.contrib.auth import authenticate, login, logout
+from urllib.request import Request
+
+from django.shortcuts import render, redirect, reverse
+import re
+from django.http import HttpResponseRedirect, HttpResponse
+from django.template import context
+from .models import myuser
+from .forms import RegisterationForm, loginForm, EditForm
+from django.views import View
+from django.views.generic import ListView, View, UpdateView
+
+from django.contrib import messages
+from django.contrib.sites.shortcuts import get_current_site
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode
+from django.template.loader import render_to_string
+from .tokens import account_activation_token
 
 
 # Create your views here.
 
 def home(request):
-    context = {}
-    email = request.session['Email']
-    #password = request.session['password']
-    users = myuser.objects.all()
-    for user in users:
-        if user.Email == email:
-            context['user'] = user
-            return render(request, 'home.html', context)
-    #return HttpResponse(userr)
-    #if users:
+    if request.method == 'GET':
+        context = {}
+        email = request.session['Email']
+        # password = request.session['password']
+        users = myuser.objects.all()
+        for user in users:
+            if user.Email == email:
+                context['user'] = user
+                return render(request, 'home.html', context)
+        # return HttpResponse(userr)
+        # if users:
 
 
 def login(request):
@@ -38,7 +52,7 @@ def login(request):
         Email = request.POST['Email']
         password = request.POST['password']
         # check cred in User
-        #authuser = authenticate(email=Email, password=password)
+        # authuser = authenticate(email=Email, password=password)
         # check cred in myuser
         user = myuser.objects.filter(Email=Email, password=password)
 
@@ -55,6 +69,7 @@ def login(request):
     request.session['username'] = None
     return redirect('/affairs/loginusertoadmin')
 '''
+
 
 def register(request):
     context = {}
@@ -83,26 +98,39 @@ def register(request):
                                   phone_number=phoneNum, profile_picture=img)
 
         # add user
-        #User.objects.create_user(email=Email, password=password)
+        # User.objects.create_user(email=Email, password=password)
         return render(request, 'register.html', context)
 
+
 def edit(request):
-    context={}
+    context = {}
+    email = request.session['Email']
+    users = myuser.objects.all()
+    for user in users:
+        if user.Email == email:
+            context['current_user'] = user
     if request.method == "GET":
-        email = request.session['Email']
-        users = myuser.objects.all()
-        for user in users:
-            if user.Email == email:
-                context['current_user'] = user
-                return render(request, 'edit.html', context)
+        return render(request, 'edit.html', context)
     else:
-        current_user = request.session['Email']
-        profile = myuser.objects.get(Email=current_user)
-        return HttpResponse(profile)
-        form = EditForm(request.POST, request.FILES, instance=current_user)
-        if form.is_valid():
-            user = form.save()
-            profile.profile_picture = myuser.profile_picture
-            profile.save()
-            #return redirect('user_profile')
-        return render(request, 'edit.html', {'current_user': current_user, 'form': form})
+
+        if request.POST:
+            user_form = EditForm(request.POST)
+
+        if user_form.is_valid():
+
+            userr = myuser.objects.get(Email=email)
+            user_form = EditForm(request.POST, instance=userr)
+            user_form.save()
+            return redirect('home')
+        else:
+            userr = myuser.objects.get(Email=email)
+            user_form = EditForm(instance=userr)
+
+            return render(request, 'edit.html', {'form': user_form})
+
+def delete(request):
+    email = request.session['Email']
+    myuser.objects.filter(Email=email).delete()
+    return redirect('/login')
+
+
