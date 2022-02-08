@@ -1,10 +1,8 @@
 from django.shortcuts import render
-from django.http import HttpResponse, HttpResponseRedirect
 from .forms import *
-from django.contrib.auth.decorators import login_required
 from .models import *
 from django.db.models import Avg
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404
 from django.contrib import messages
 
 
@@ -15,8 +13,8 @@ from django.contrib import messages
 
 def index(request):
     projects = Project.objects.all()
-    ProjectRate = Project.objects.annotate(avg=Avg("rate__rate")).order_by('-avg')[:5]
-    lastProject = Project.objects.order_by('-id')[:5]
+    ProjectRate = Project.objects.annotate(avg=Avg("rate__rate")).order_by('avg')[:5]
+    lastProject = Project.objects.order_by('id')[:5]
     featureProjects = FeatureProjects.objects.all()
     categories = Categories.objects.all()
     context = {
