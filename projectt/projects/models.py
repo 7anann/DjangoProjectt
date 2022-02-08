@@ -115,9 +115,9 @@ class Project(models.Model):
 
 class ImageProject(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
-    image = models.ImageField(
-        upload_to='projectsimg/',
-        default='None/no-img.jpg')
+
+    image = models.ImageField(upload_to='images/',default='None/no-img.jpg')
+
 
     def remove_on_image_update(self):
         try:

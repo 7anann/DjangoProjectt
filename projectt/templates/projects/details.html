@@ -43,7 +43,7 @@
             {% if image.image %}
             <div>
 
-                <img class="card-img-top" src="{{image.image }}" class="w-100" height="500">
+                <img class="card-img-top" src="{{image.image.url }}" class="w-100" height="500">
             </div>
 
             {% endif %}
@@ -253,7 +253,7 @@
             <div class="col-md-4 mb-3">
                 <div class="card w-100 shadow mb-5 bg-white rounded " style="min-height:600px;max-height:600px;"  >
                     {% if project2.first_Projectphoto  %}
-                    <img src="{{project2.first_Projectphoto.image}}" class="card-img-top w-100" height="200" alt="...">
+                    <img src="{{project2.first_Projectphoto.image.url}}" class="card-img-top w-100" height="200" alt="...">
                     {% else %}
                         <img src="{% static 'projects/image/001.jpg' %}" class="card-img-top w-100" height="200" alt="...">
                     {% endif %}
