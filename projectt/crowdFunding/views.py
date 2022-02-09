@@ -1,29 +1,17 @@
-from urllib.request import Request
-
+from django.utils.encoding import force_str
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.core.mail import EmailMessage
+from .token import account_activation_token
 from django.shortcuts import render, redirect, reverse
 import re
-from django.http import HttpResponseRedirect, HttpResponse
-from django.template import context
+from django.http import HttpResponse
 from .models import myuser
 from .forms import RegisterationForm, loginForm, EditForm
-from django.views import View
-from urllib.request import Request
-
-from django.shortcuts import render, redirect, reverse
-import re
-from django.http import HttpResponseRedirect, HttpResponse
-from django.template import context
-from .models import myuser
-from .forms import RegisterationForm, loginForm, EditForm
-from django.views import View
-from django.views.generic import ListView, View, UpdateView
-
-from django.contrib import messages
 from django.contrib.sites.shortcuts import get_current_site
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 from django.template.loader import render_to_string
-from .tokens import account_activation_token
+
 
 
 # Create your views here.
@@ -54,52 +42,21 @@ def login(request):
         # check cred in User
         # authuser = authenticate(email=Email, password=password)
         # check cred in myuser
-        user = myuser.objects.filter(Email=Email, password=password)
+        user = myuser.objects.get(Email=Email, password=password)
 
-        if user:
+        if user and user.is_active:
             request.session['Email'] = Email
 
             return redirect(reverse('home'))
         else:
-            context['errormsg'] = 'Invalid credentials'
+            context['errormsg'] = 'Invalid credentials or not validated Email Address'
             return render(request, 'login.html', context)
 
 
-'''def mylogout(request):
+def mylogout(request):
     request.session['username'] = None
-    return redirect('/affairs/loginusertoadmin')
-'''
+    return redirect('login')
 
-
-def register(request):
-    context = {}
-    form = RegisterationForm()
-    if (request.method == 'GET'):
-        context['form'] = form
-        return render(request, 'register.html', context)
-    else:
-        fname = request.POST['first_name']
-        lname = request.POST['last_name']
-        Email = request.POST['Email']
-        password = request.POST['password']
-        conf = request.POST['confirm_password']
-        phoneNum = request.POST['phone_number']
-        img = request.POST['profile_picture']
-        pattern = re.compile("^01[0125][0-9]{8}$")
-        checkNum = pattern.match(phoneNum)
-        checkPass = password == conf
-        if not checkNum:
-            context['errormsg'] = "Invalid phone number"
-        elif not checkPass:
-            context['errormsg'] = "Passwords don't match"
-        else:
-            myuser.objects.create(first_name=fname, last_name=lname, Email=Email,
-                                  password=password, confirm_password=conf,
-                                  phone_number=phoneNum, profile_picture=img)
-
-        # add user
-        # User.objects.create_user(email=Email, password=password)
-        return render(request, 'register.html', context)
 
 
 def edit(request):
@@ -134,3 +91,68 @@ def delete(request):
     return redirect('/login')
 
 
+def signup(request):
+    context={}
+    if request.method == 'POST':
+        form = RegisterationForm(request.POST, request.FILES)
+        Email = request.POST['Email']
+        password = request.POST['password']
+        conf = request.POST['confirm_password']
+        phoneNum = request.POST['phone_number']
+        pattern = re.compile("^01[0125][0-9]{8}$")
+        emailPattern = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
+        checkNum = pattern.match(phoneNum)
+        checkMail = re.fullmatch(emailPattern,Email)
+        checkPass = password == conf
+        if not checkMail:
+            context['errormsg'] = "Invalid Email Address"
+            return render(request, 'register.html', context)
+        if not checkNum:
+            context['errormsg'] = "Invalid phone number"
+            return render(request, 'register.html', context)
+        if not checkPass:
+            context['errormsg'] = "Passwords don't match"
+            return render(request, 'register.html', context)
+        if form.is_valid():
+            conff = form.cleaned_data.get('conf')
+            print(conff)
+            # save form in the memory not in database
+            user = form.save(commit=False)
+            user.is_active = False
+            user.save()
+            # to get the domain of the current site
+            current_site = get_current_site(request)
+            mail_subject = 'Activation link has been sent to your email id'
+            message = render_to_string('acc_active_email.html', {
+                'user': user,
+                'domain': current_site.domain,
+                'uid': urlsafe_base64_encode(force_bytes(user.pk)),
+                'token': account_activation_token.make_token(user),
+            })
+            to_email = form.cleaned_data.get('Email')
+            email = EmailMessage(
+                mail_subject, message, to=[to_email]
+            )
+
+            email.send()
+            context['errormsg'] = 'Please confirm your email address to complete the registration'
+            context['form'] = loginForm()
+            return render(request, 'login.html', context)
+            #return HttpResponse('Please confirm your email address to complete the registration')
+    else:
+        form = RegisterationForm()
+    return render(request, 'register.html', {'form': form})
+
+def activate(request, uidb64, token):
+    #User = get_user_model()
+    try:
+        uid = force_str(urlsafe_base64_decode(uidb64))
+        user = myuser.objects.get(id=uid)
+    except(TypeError, ValueError, OverflowError, myuser.DoesNotExist):
+        user = None
+    if user is not None and account_activation_token.check_token(user, token):
+        user.is_active = True
+        user.save()
+        return HttpResponse('Thank you for your email confirmation. Now you can login your account.')
+    else:
+        return HttpResponse('Activation link is invalid!')

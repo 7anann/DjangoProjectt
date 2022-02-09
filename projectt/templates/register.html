@@ -18,7 +18,10 @@
             {%csrf_token%}
             <br><br>
             <div class="form-group">
+                <form method="POST" enctype="multipart/form-data">
+                     {% csrf_token %}
             {{form.as_p}}
+                    </form>
                 </div>
             <br><br>
             <div class="col-lg-6 login-btm login-button">

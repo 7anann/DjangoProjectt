@@ -1,5 +1,5 @@
 {% extends 'mainNav.html' %}
-
+{%load static%}
 {% block content %}
 <script type='text/javascript' src='https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js'></script>
 <script type='text/javascript'>
@@ -15,15 +15,15 @@
         <div class="col-xl-8 order-xl-1">
             <div class="card bg-secondary shadow">
                 <div class="card-header bg-white border-0">
-                    <div class="row align-items-center">
+                    <div class="row align-items-center ">
 
-                        <div class="col-4 mb-6">
+                        <div class="col mb-6 ms-3 ">
                             <div class="card-profile-image">
-                                <img src="/{{ BASIC_DIR }}/{{user.profile_picture}}" height="100" width="100" class="rounded-circle"/>
+                                <img src="{{current_user.profile_picture.url}}" height="100" width="100" class="rounded-circle"/>
                             </div>
                         </div>
-                        <div class="col-4 d-flex justify-content-right">
-                            <a href="{% url 'user_del' %}" class="confirm-delete btn btn btn-danger text-light"
+                        <div class="col d-flex justify-content-center ms-5">
+                            <a href="{% url 'user_del' %}" class="confirm-delete btn btn btn-danger text-light "
                                data-toggle="modal" data-target="#deleteModal">Delete Account</a>
                             <!-- Modal -->
                             <div class="modal" tabindex="-1" role="dialog" id="deleteModal">
