@@ -24,4 +24,4 @@ class loginForm(forms.ModelForm):
 class EditForm(forms.ModelForm):
     class Meta:
         model = myuser
-        exclude = ('Email','profile_picture','confirm_password','is_active')
+        exclude = ('Email','confirm_password','is_active')

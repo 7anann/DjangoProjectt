@@ -1,12 +1,10 @@
-from django.contrib.auth.models import User
 from django.db import models
 from django.core.validators import MaxValueValidator, MinValueValidator
 
 from django.db.models import Avg, Sum
 from datetime import datetime
-
-
-# Create your models here.
+from crowdFunding.models import myuser 
+from django.template.defaultfilters import slugify
 
 class Categories(models.Model):
     name = models.CharField(max_length=100)
@@ -36,9 +34,10 @@ class Project(models.Model):
     tags = models.ManyToManyField(ProjectTage, null=True, blank=True)
     start_date = models.DateField()
     end_date = models.DateField()
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(myuser, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    image=models.ImageField(upload_to='images/',default='None/no-img.jpg')
 
     def first_Projectphoto(self):
         return self.imageproject_set.all().first()
@@ -60,9 +59,10 @@ class Project(models.Model):
 
     def donationCount(self):
         return self.donation_set.all().count()
-
     def donationMoney(self):
-        return self.donation_set.all().aggregate(Sum('amount'))
+        donate=self.donation_set.all().aggregate(Sum('amount'))
+        return donate
+            # hadeer
 
     def relativeProject(self):
         num = self.tags.count()
@@ -142,10 +142,15 @@ class ImageProject(models.Model):
         return super(ImageProject, self).save()
     def __str__(self):
         return f"photo of :{self.project}"
+    
+def get_image_filename(instance, filename):
+    title = instance.post.title
+    slug = slugify(title)
+    return "post_images/%s-%s" % (slug, filename)
 
 class Rate(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(myuser, on_delete=models.CASCADE)
     rate = models.IntegerField(validators=[MinValueValidator(1)
         , MaxValueValidator(10)])
     def __str__(self):
@@ -163,7 +168,7 @@ class FeatureProjects(models.Model):
         return self.project.title
 
 class Donation(models.Model):
-    owner = models.ForeignKey(User, on_delete=models.CASCADE)
+    owner = models.ForeignKey(myuser, on_delete=models.CASCADE)
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     amount = models.IntegerField()
     created_at = models.DateTimeField(auto_now_add=True)
@@ -172,7 +177,7 @@ class Donation(models.Model):
         return f"{self.project} -{self.owner}"
 
 class Comment(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(myuser, on_delete=models.CASCADE)
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
@@ -194,8 +199,16 @@ class Comment(models.Model):
         return self.content
 
 
+
+class ReportComment(models.Model):
+    user = models.ForeignKey(myuser, on_delete=models.CASCADE)
+    comment = models.ForeignKey(Comment, on_delete=models.CASCADE)
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at= models.DateTimeField(auto_now=True)
+    # hadeer
 class ReportProject(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(myuser, on_delete=models.CASCADE)
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
@@ -203,4 +216,4 @@ class ReportProject(models.Model):
 
     def __str__(self):
         return self.content
-
+    # hadeer

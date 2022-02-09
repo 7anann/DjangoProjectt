@@ -6,7 +6,7 @@
 
 <!--include nav bar-->
 
-{% include "layout/Navbar.html" %}
+{% include "mainNav.html" %}
 
 <div style="height:65px;"></div>
 <!--for error -->
@@ -105,7 +105,9 @@
             </p>
             <hr>
             <p class="card-text lead ">
-
+                
+                {% comment %}  {% endcomment %}
+                {% if authenticated %}
             <div class="row">
                 <div class="col-md">
                     <div class="my-rating" data-rating="{{project.rating.rate__avg}}"></div>
@@ -115,9 +117,9 @@
                     <button type="button" class="btn btn-link" data-toggle="modal" data-target="#dnonate"
                             data-whatever="@mdo">Give Rate
                     </button>
-                     <button type="button" class="btn btn-link" data-toggle="modal" data-target="#dnonate2" data-whatever="@mdo">Donate</button>
+                    <button type="button" class="btn btn-link" data-toggle="modal" data-target="#dnonate2{{forloop.counter}}" data-whatever="@mdo">Give Donation</button>
 
-                    <button type="button" class="btn btn-link" data-toggle="modal" data-target="#reportpost"
+                    <button type="button" class="btn btn-link" data-toggle="modal" data-target="#report"
                             data-whatever="@mdo">Give Report
                     </button>
                     <!--model-->
@@ -132,7 +134,7 @@
                                     </button>
                                 </div>
                                 <div class="modal-body">
-                                    <form action="#" method="post" id="donta">
+                                    <form action="/rate/{{project.id}}" method="post" id="donta">
                                         {% csrf_token %}
                                         <div class="my-rating-5"></div>
                                         <input type="hidden" class="rates" name="rate">
@@ -146,8 +148,71 @@
                             </div>
                         </div>
                     </div>
-                </div>
+                    <div class="modal fade" id="report" tabindex="-1" role="dialog" aria-labelledby="reportLabel"
+                         aria-hidden="true">
+                        <div class="modal-dialog" role="document">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="reportLabel">Give Report To {{project.title}}</h5>
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
+                                </div>
+                                <div class="modal-body">
+                                    <form action="/report/{{project.id}}" method="post" id="repo">
+                                        {% csrf_token %}
+                                        <input name='content' type="text" placeholder="Enter your report reason">
+                                            <button
+                                                type="submit"
+                                                name="submit"
+                                                class="btn btn-info btn-md"
+                                                value="Report Project"
+                                            >Report</button>
+                                    </form>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
 
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!--model-->
+                      
+                    <div class="modal fade" id="dnonate2{{forloop.counter}}" tabindex="-1" role="dialog" aria-labelledby="dnonate{{forloop.counter}}Label" aria-hidden="true">
+                        <div class="modal-dialog" role="document">
+                          <div class="modal-content">
+                            <div class="modal-header">
+                              <h5 class="modal-title" id="dnonate{{forloop.counter}}Label">New Donate To {{project.title}}</h5>
+                              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                              </button>
+                            </div>
+                            <div class="modal-body">
+                              <form action="/donate/{{project.id}}" method="post" id="donta">
+                                  {% csrf_token %}
+                                <div class="form-group">
+                                  <label for="recipient-name" class="col-form-label">Recipient To :</label>
+                                  <input type="text" class="form-control" disabled id="recipient-name" value="{{project.user.username}}">
+                                </div>
+                                <div class="form-group">
+                                  <label  class="col-form-label">Quantity oF Money</label>
+                                  <input type="number"  class="form-control"  required name="amount"  placeholder="Enter Quantity of Money">
+                                </div>
+                                  <input type="submit" class="btn btn-primary"  value="Donate"  >
+                              </form>
+                            </div>
+                               <div class="modal-footer">
+                              <button type="button"  class="btn btn-secondary" data-dismiss="modal">Close</button>
+  
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                </div>
+                 {% comment %} hadeer {% endcomment %}
+
+                 {% endif %}
 
         </div>
         </div>
@@ -198,7 +263,7 @@
                             </button>
                         </div>
                         <div class="modal-body">
-                            <form action="#" method="post">
+                            <form action="/comment/{{project.id}}" method="post">
                                 {% csrf_token %}
                                 <div class="form-group">
                                     <label class="col-form-label">Project</label>
@@ -229,7 +294,9 @@
         </div>
         {% endfor %}
         <!--add comment-->
-        <form class="p-4" method="post" action="#">
+        {% if authenticated %}
+        <!--add comment-->
+        <form class="p-4" method="post" action="{% url 'projects:addcomment' project.id %}">
             {% csrf_token %}
               <div class="form-group">
                 <label for="exampleFormControlTextarea1" class="h3 text-info">New Comment</label>
@@ -239,9 +306,26 @@
                  <input type="submit" class="btn btn-primary mb-2 btn-lg" value="Comment">
              </div>
             </form>
+            {% else %}
+            <form class="p-4" method="post" action="">
+                {% csrf_token %}
+                  <div class="form-group">
+                    <label for="exampleFormControlTextarea1" class="h3 text-info">New Comment</label>
+                    <textarea class="form-control" disabled id="exampleFormControlTextarea1" name ="content" rows="3"></textarea>
+                  </div>
+                 <div class="form-group  ">
+                     <input disabled ype="submit" class="btn btn-primary mb-2 btn-lg" value="Comment">
+                 </div>
+                </form>
 
+        {% endif %}
         </form>
+        {% if owned %}
+        <a class="btn btn-primary" href="{% url 'projects:deleteproject' project.id  %}">Delete</a>
+        <a class="btn btn-primary" href="{%url 'projects:editproject' project.id  %}">Update</a>
+       {% endif %}
    </div>
+
 
 
 <!--end-->
@@ -287,35 +371,6 @@
                   </div>
                  <div class="card-body">
                     <a href="{% url 'projects:detail' project2.id %}" class="card-link">Details</a>
-
-                  <button type="button" class="btn btn-link" data-toggle="modal" data-target="#dnonate2{{forloop.counter}}" data-whatever="@mdo">Donate</button>
-                    <!--model-->
-                     <div class="modal fade" id="dnonate2{{forloop.counter}}" tabindex="-1" role="dialog" aria-labelledby="dnonate2{{forloop.counter}}Label" aria-hidden="true">
-                      <div class="modal-dialog" role="document">
-                        <div class="modal-content">
-                          <div class="modal-header">
-
-                          <div class="modal-body">
-                            <form action="#" method="post" id="dnonate2">
-                                {% csrf_token %}
-                              <div class="form-group">
-                                <label  class="col-form-label">Recipient To :</label>
-                                <!-- <input type="text" class="form-control" disabled value="{{project2.user.username}}"> -->
-                              </div>
-                              <div class="form-group">
-                                <label  class="col-form-label">Qunaty oF Many</label>
-                                <input type="number"  class="form-control"  required name="amount"  placeholder="Enter qunaty of mony">
-                              </div>
-                                <input type="submit" class="btn btn-primary"  value="Donate"  >
-                            </form>
-                          </div>
-                             <div class="modal-footer">
-                            <button type="button"  class="btn btn-secondary" data-dismiss="modal">Close</button>
-
-                          </div>
-                        </div>
-                      </div>
-                    </div>
                  </div>
                        <div class="more-info">
                         <div class="row no-gutters ">

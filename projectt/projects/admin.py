@@ -11,4 +11,4 @@ admin.site.register(Donation)
 admin.site.register(ImageProject)
 admin.site.register(ProjectTage)
 admin.site.register(FeatureProjects)
-
+admin.site.register(Comment)
